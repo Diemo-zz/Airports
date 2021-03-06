@@ -1,8 +1,8 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 import pandas as pd
 import networkx as nx
 from typing import Tuple, Union, List
-
+import sys
 
 def read_in_graph(path: str, seperator: str= ";") -> nx.DiGraph:
     """Read in the file stored in path and return the associated graph
@@ -13,12 +13,18 @@ def read_in_graph(path: str, seperator: str= ";") -> nx.DiGraph:
     :param: path: The path to the file holding the airport information
     :param: seperator: The seperator between the columns
     """
-    df = pd.read_csv("Airports.csv", sep = ";")
+    df = pd.read_csv(path, sep = seperator)
     graph = nx.from_pandas_edgelist(df, source = "Dep", target = "Arr", edge_attr = True, create_using = nx.DiGraph())
     return graph
 
 
 def read_in_airports(allowed_nodes: List[str]) -> Tuple[str, str]:
+    """
+    Reads from the command line the airports to get the shortest distance
+
+    :param allowed_nodes: The nodes which are in the airport graph
+    :return: departing airport name, destination airport name
+    """
     error = None
     while True:
 
@@ -46,6 +52,15 @@ def read_in_airports(allowed_nodes: List[str]) -> Tuple[str, str]:
 
 def get_shortest_path(graph: nx.DiGraph, departure_airport: str, destination_airport: str) -> Union[Tuple[int, list],
                                                                                                     Tuple[None, None]]:
+    """
+    Get the shortest path between nodes
+
+    Handles missing nodes, and no path available
+    :param graph: Graph holding the airport connection information
+    :param departure_airport: The source node
+    :param destination_airport: The destination node
+    :return: total lenght of the path, the path taken
+    """
     try:
         length, path = nx.single_source_dijkstra(graph, departure_airport, destination_airport, weight = "Time")
     except nx.exception.NetworkXNoPath:
@@ -56,6 +71,14 @@ def get_shortest_path(graph: nx.DiGraph, departure_airport: str, destination_air
 
 
 def format_output(graph: nx.Graph, length: int, path: list) -> str:
+    """
+    Format the output
+
+    :param graph: The graph holding the airport connection information
+    :param length: The total path length
+    :param path: The path used
+    :return: formatted output string
+    """
     try:
         output = ""
         for index, p in enumerate(path[:-1]):
@@ -66,8 +89,13 @@ def format_output(graph: nx.Graph, length: int, path: list) -> str:
     return output
 
 
-def calculate_shortest_path(filename: str) -> None:
-    graph = read_in_graph(filename)
+def calculate_shortest_path(filename: str, seperator: str= ";") -> None:
+    """
+    Read in the airport information, the source airport, the destination airport and calculate the shortest path
+    :param filename: File holding the airport information
+    :return:
+    """
+    graph = read_in_graph(filename, seperator= seperator)
     departure_airport, destination_airport = read_in_airports(graph.nodes())
     length, shortest_path = get_shortest_path(graph, departure_airport, destination_airport)
     if length is None:
@@ -75,5 +103,17 @@ def calculate_shortest_path(filename: str) -> None:
     else:
         print(format_output(graph, length, shortest_path))
 
+
 if __name__ == "__main__":
-    calculate_shortest_path("Airports.csv")
+    args = sys.argv
+    print(args)
+    if len(args) > 2:
+        filename = args[1]
+        seperator = args[2]
+    elif len(args) == 2:
+        filename = args[1]
+        seperator = ","
+    else:
+        filename = "Airports.csv"
+        seperator = ";"
+    calculate_shortest_path(filename, seperator)
