@@ -1,6 +1,4 @@
-################
-Airport Distance
-################
+#Airport Distance
 
 airport_distance is a python shell program that will read in the distances between a list of airports, and then calculate the shortest path between the two airports which have been entered.
 
